@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spencer and Williams</title>
+    <!-- Include Algolia CSS (Optional for InstantSearch Styling) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.css@7/themes/satellite-min.css">
+    <!-- Optional: Include your custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Basic styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f2f5; /* Updated background color */
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            background-color: #1d3557;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        header nav a {
+            color: #f1faee;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .search-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Added shadow for depth */
+        }
+        .hit {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: box-shadow 0.3s ease;
+        }
+        .hit:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .hit img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-right: 20px;
+        }
+        .hit-details .title {
+            font-weight: 600;
+            font-size: 1.2em;
+            color: #1d3557;
+        }
+        .hit-details .price {
+            color: #e63946; /* Updated price color */
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        /* Facet filters styling */
+        .facet {
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .facet h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1d3557; /* Updated facet title color */
+            margin-bottom: 10px;
+        }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .search-container {
+                padding: 10px;
+            }
+            .hit {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .hit img {
+                margin-bottom: 10px;
+            }
+            .facet {
+                width: 100%;
+                padding-right: 0;
+            }
+            .search-container > div {
+                flex-direction: column;
+            }
+        }
+        /* Loading Indicator and Error Message */
+        #loading-indicator, #error-message {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        #error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Spencer and Williams</h1>
+        <nav>
+            <a href="#">Home</a>
+            <a href="#">Shop</a>
+        </nav>
+    </header>
+
+    <div class="search-container">
+        <h1>Product Search</h1>
+        
+        <!-- Search Box -->
+        <div id="searchbox"></div>
+        
+        <div style="display: flex; margin-top: 20px;">
+            <!-- Facet Filters -->
+            <div style="width: 25%; padding-right: 20px;">
+                <div class="facet">
+                    <h3>Brand</h3>
+                    <div id="facet-brand"></div>
+                </div>
+                <div class="facet">
+                    <h3>Price</h3>
+                    <div id="facet-price"></div>
+                </div>
+            </div>
+            
+            <!-- Search Results -->
+            <div style="width: 75%;">
+                <!-- Sort By Widget -->
+                <div id="sort-by" style="margin-bottom: 20px;"></div>
+                
+                <div id="hits"></div>
+                <div id="pagination" style="margin-top: 20px;"></div>
+                
+                <!-- Loading Indicator -->
+                <div id="loading-indicator">
+                    <p>Loading...</p>
+                </div>
+                
+                <!-- Error Message -->
+                <div id="error-message">
+                    <p>Something went wrong. Please try again later.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Include Algolia Search Client -->
+    <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.12.1/dist/algoliasearch-lite.umd.js"></script>
+    <!-- Include InstantSearch.js -->
+    <script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4.49.0/dist/instantsearch.production.min.js"></script>
+    <script>
+        // Initialize Algolia Search Client with your credentials
+        const searchClient = algoliasearch('AVZNIA8WWX', '4172e441e35a19b7154a29f02e233ddb'); // Replace with your credentials
+        
+        // Initialize InstantSearch
+        const search = instantsearch({
+            indexName: 'products',
+            searchClient,
+        });
+        
+        // Add Search Box Widget
+        search.addWidget(
+            instantsearch.widgets.searchBox({
+                container: '#searchbox',
+                placeholder: 'Search for products...',
+                autofocus: true,
+            })
+        );
+        
+        // Add Hits Widget for Search Results
+        search.addWidget(
+            instantsearch.widgets.hits({
+                container: '#hits',
+                templates: {
+                    item: `
+                        <div class="hit">
+                            <img src="{{image}}" alt="{{name}}" onerror="this.onerror=null; this.src='path_to_placeholder_image.jpg';" />
+                            <div class="hit-details">
+                                <div class="title">{{#helpers.highlight}}{ "attribute": "name" }{{/helpers.highlight}}</div>
+                                <div class="price">$ {{price}}</div>
+                            </div>
+                        </div>
+                    `,
+                },
+            })
+        );
+        
+        // Add Refinement List for Brand Facet
+        search.addWidget(
+            instantsearch.widgets.refinementList({
+                container: '#facet-brand',
+                attribute: 'brand',
+                searchable: true,
+                showMore: true,
+                searchablePlaceholder: 'Search brands',
+            })
+        );
+        
+        // Add Range Slider for Price Facet
+        search.addWidget(
+            instantsearch.widgets.rangeSlider({
+                container: '#facet-price',
+                attribute: 'price',
+                tooltips: {
+                    format(rawValue) {
+                        return '$' + Math.round(rawValue); // Round values to show whole numbers
+                    },
+                },
+                cssClasses: {
+                    root: 'ais-RangeSlider', // Add some custom styling if necessary
+                },
+                // Add min and max based on actual product prices
+                min: 0,
+                max: 5000,  // Set max based on your product price range
+            })
+        );
+
+        // Add Sort By Widget
+        search.addWidget(
+            instantsearch.widgets.sortBy({
+                container: '#sort-by',
+                items: [
+                    { label: 'Most Relevant', value: 'products' },
+                    { label: 'Price: Low to High', value: 'products_price_asc' },
+                    { label: 'Price: High to Low', value: 'products_price_desc' },
+                ],
+            })
+        );
+        
+        // Add Pagination Widget
+        search.addWidget(
+            instantsearch.widgets.pagination({
+                container: '#pagination',
+            })
+        );
+        
+        // Show loading indicator when a search is in progress
+        search.on('searching', () => {
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+        });
+        
+        // Hide loading indicator when search results are rendered
+        search.on('render', () => {
+            document.getElementById('loading-indicator').style.display = 'none';
+        });
+        
+        // Handle errors
+        search.on('error', (error) => {
+            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('loading-indicator').style.display = 'none';
+            console.error(error);
+        });
+        
+        // Start the Search Interface
+        search.start();
+    </script>
+</body>
+</html>
