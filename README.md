@@ -31,6 +31,10 @@ Run the following command to install all required Node.js packages:
 
 npm install
 
+Install dotenv module, which is used to load environment variables from a .env file. Run the following command in your terminal:
+
+pip install python-dotenv
+
 ### 3. Setup Algolia Credentials
 
 You need to provide your Algolia Application ID, Admin API Key, and the index name. Here's how:
