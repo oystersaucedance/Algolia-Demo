@@ -141,7 +141,7 @@ Additionally, styling the interface to give it a professional look involved opti
 
 ## Approximate Time Taken
 
-The project took approximately **12-15 hours**, including:
+The project took approximately **5-7 hours**, including:
 - Answering the questions.
 - Setting up Algolia search.
 - Creating and styling the frontend demo.
