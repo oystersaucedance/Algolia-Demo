@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.egg-info/
+venv/
+*.env
+
+# Node modules (if using JavaScript)
+node_modules/
+
+# IDEs and editors
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+*.vscode/
+
+# Other build artifacts
+/build/
+dist/
+
+# Frontend specific
+/frontend/assets/  # Ignore all assets in frontend
