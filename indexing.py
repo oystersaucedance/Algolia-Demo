@@ -30,13 +30,12 @@ print(f"Initialized index: {INDEX_NAME}")
 
 # Load data from products.json
 try:
-    with open('data/products.json') as f:
+    with open('products.json') as f:
         products = json.load(f)
         print(f"Loaded {len(products)} products from JSON file.")
 except Exception as e:
     print(f"Error loading products: {e}")
     exit(1)
-
 
 # Index the data
 try:
@@ -73,56 +72,34 @@ index_settings = {
         'desc(popularity)',
         'asc(price)'
     ],
-    'ranking': [
-        'typo',
-        'geo',
-        'words',
-        'filters',
-        'proximity',
-        'attribute',
-        'exact',
-        'custom'
-    ],
     'optionalWords': ['and', 'the'],
     'exactOnSingleWordQuery': 'word',
     'hitsPerPage': 20
 }
-# Define replica indices for sorting by price
-replicas = [
-    ('products_price_asc', {
-        'ranking': [
-            'asc(price)',  # Sort by price ascending
-            'typo',
-            'geo',
-            'words',
-            'filters',
-            'proximity',
-            'attribute',
-            'exact',
-            'custom'
-        ]
-    }),
-    ('products_price_desc', {
-        'ranking': [
-            'desc(price)',  # Sort by price descending
-            'typo',
-            'geo',
-            'words',
-            'filters',
-            'proximity',
-            'attribute',
-            'exact',
-            'custom'
-        ]
-    }),
-]
 
-# Create replica indices
-for replica_name, settings in replicas:
+# Set the main index settings
+try:
+    index.set_settings(index_settings)
+    print("Index settings applied successfully.")
+except Exception as e:
+    print(f"Error setting index settings: {e}")
+
+# Define settings for replicas (excluding forbidden settings)
+replica_settings = {
+    'customRanking': index_settings['customRanking'],  # Keep only customRanking for sorting
+}
+
+# Create replica indices without ranking
+replicas = ['products_price_asc', 'products_price_desc']
+
+for replica_name in replicas:
     try:
-        replica = client.init_index(replica_name)
-        replica.set_settings(settings)
-        print(f"Replica index '{replica_name}' created with custom ranking.")
+        # Create the replica index and set its settings
+        replica_index = client.init_index(replica_name)
+        # Set only the allowed settings for replicas
+        replica_index.set_settings(replica_settings)
+        
+        print(f"Replica index '{replica_name}' created successfully.")
     except Exception as e:
         print(f"Error creating replica '{replica_name}': {e}")
 
